@@ -4,10 +4,19 @@ from tradingagents.agents.context import (
     opponent_argument_or_opening,
     report_or_absent,
 )
+from tradingagents.agents.schemas import DebateTurn
+from tradingagents.agents.structured import bind_structured
+from tradingagents.agents.utils.debate_skel import (
+    build_debate_instructions,
+    render_debate_turn,
+)
 from tradingagents.dataflows.config import get_config
 
 
 def create_bull_researcher(llm):
+    structured_llm = bind_structured(llm, DebateTurn, "Bull Analyst")
+    if structured_llm is None:
+        raise RuntimeError("Bull Analyst requires structured-output support")
     def bull_node(state) -> dict:
         investment_debate_state = state["investment_debate_state"]
         history = investment_debate_state.get("history", "")
@@ -37,6 +46,15 @@ def create_bull_researcher(llm):
             else "Asset fundamentals report (may be unavailable for crypto)"
         )
 
+        config = get_config()
+        current_round = investment_debate_state["count"] // 2 + 1
+        is_final_turn = current_round >= config["max_debate_rounds"]
+
+        debate_instructions = build_debate_instructions(
+            "bull",
+            is_final_turn=is_final_turn,
+        )
+
         prompt = f"""You are a Bull Analyst advocating for investing in the {target_label}. Your task is to build a strong, evidence-based case emphasizing growth potential, competitive advantages, and positive market indicators. Leverage the provided research and data to address concerns and counter bearish arguments effectively.
 
 Key points to focus on:
@@ -54,12 +72,17 @@ Latest world affairs news: {news_report}
 {fundamentals_label}: {fundamentals_report}
 Conversation history of the debate: {injected_history}
 Last bear argument: {current_response}
-Use this information to deliver a compelling bull argument, refute the bear's concerns, and engage in a dynamic debate that demonstrates the strengths of the bull position.
+{debate_instructions}
 """ + get_language_instruction()
 
-        response = llm.invoke(prompt)
+        response = structured_llm.invoke(prompt)
+        turn = DebateTurn.model_validate(response)
+        rendered = render_debate_turn(
+            turn,
+            is_final_turn=is_final_turn,
+        )
 
-        argument = f"Bull Analyst: {response.content}"
+        argument = f"Bull Analyst: {rendered}"
 
         new_investment_debate_state = {
             "history": history + "\n" + argument,

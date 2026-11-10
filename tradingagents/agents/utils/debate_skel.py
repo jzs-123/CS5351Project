@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+from tradingagents.agents.schemas import DebateTurn
 from tradingagents.agents.structured import NO_EXTERNAL_TOOLS
 
 
@@ -64,4 +65,16 @@ Apply these argument rules:
 {NO_EXTERNAL_TOOLS}
 """.strip()
 
+def render_debate_turn(
+    turn: DebateTurn,
+    *,
+    is_final_turn: bool,
+) -> str:
+    """Validate and serialize a debate turn for the existing history."""
+    turn = DebateTurn.model_validate(turn)
+
+    if is_final_turn and not turn.reverse_check.strip():
+        raise ValueError("Final debate turn requires a non-empty reverse_check")
+
+    return turn.model_dump_json(indent=2)
 
