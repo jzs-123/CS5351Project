@@ -23,6 +23,21 @@ from tradingagents.graph.context_budget import (
 )
 
 
+def _structured_argument():
+    return {
+        "key_claims": [
+            {
+                "evidence": "Evidence supplied by the test report.",
+                "reasoning": "a new argument",
+                "response": "An opening thesis based on the available evidence.",
+            }
+        ],
+        "evidence_refs": ["market report"],
+        "refuted_points": [],
+        "stance_score": 0.5,
+        "reverse_check": "The available evidence may be incomplete.",
+    }
+
 def _history(rounds: int, *, pad: int = 200) -> str:
     """A realistic growing debate history: ``rounds`` bull+bear exchanges."""
     filler = "x" * pad
@@ -154,7 +169,9 @@ def test_metrics_dict_is_serialisable_and_has_token_estimate():
 @pytest.mark.unit
 def test_researcher_returns_context_stats():
     llm = MagicMock()
-    llm.invoke.return_value = MagicMock(content="arg")
+    llm.with_structured_output.return_value.invoke.return_value = (
+    _structured_argument()
+    )
     state = {
         "company_of_interest": "AAPL", "asset_type": "stock",
         "market_report": "m", "sentiment_report": "s",
@@ -229,18 +246,23 @@ def test_researcher_injects_compact_but_stores_full_history(monkeypatch, factory
     monkeypatch.setattr(
         mod,
         "get_config",
-        lambda: {"debate_history_compact": True, "history_compress": "truncate",
-                 "history_max_chars": 100_000, "history_max_turns": 1},
+        lambda: {
+            "debate_history_compact": True,
+            "history_compress": "truncate",
+            "history_max_chars": 100_000,
+            "history_max_turns": 1,
+            "max_debate_rounds": 1,
+        },
     )
     full_history = _history(6)
     captured = {}
 
     def _invoke(prompt):
         captured["prompt"] = prompt
-        return MagicMock(content="a new argument")
+        return _structured_argument()
 
     llm = MagicMock()
-    llm.invoke.side_effect = _invoke
+    llm.with_structured_output.return_value.invoke.side_effect = _invoke
     state = {
         "company_of_interest": "AAPL", "asset_type": "stock",
         "market_report": "m", "sentiment_report": "s",
