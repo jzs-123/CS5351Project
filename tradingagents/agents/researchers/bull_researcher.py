@@ -8,6 +8,7 @@ from tradingagents.agents.schemas import DebateTurn
 from tradingagents.agents.structured import bind_structured
 from tradingagents.agents.utils.debate_skel import (
     build_debate_instructions,
+    invoke_debate_turn,
     render_debate_turn,
 )
 from tradingagents.dataflows.config import get_config
@@ -15,8 +16,6 @@ from tradingagents.dataflows.config import get_config
 
 def create_bull_researcher(llm):
     structured_llm = bind_structured(llm, DebateTurn, "Bull Analyst")
-    if structured_llm is None:
-        raise RuntimeError("Bull Analyst requires structured-output support")
     def bull_node(state) -> dict:
         investment_debate_state = state["investment_debate_state"]
         history = investment_debate_state.get("history", "")
@@ -75,8 +74,7 @@ Last bear argument: {current_response}
 {debate_instructions}
 """ + get_language_instruction()
 
-        response = structured_llm.invoke(prompt)
-        turn = DebateTurn.model_validate(response)
+        turn = invoke_debate_turn(llm, structured_llm, prompt)
         rendered = render_debate_turn(
             turn,
             is_final_turn=is_final_turn,

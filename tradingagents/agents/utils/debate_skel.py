@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Literal
 
 from tradingagents.agents.schemas import DebateTurn
@@ -78,3 +79,16 @@ def render_debate_turn(
 
     return turn.model_dump_json(indent=2)
 
+def invoke_debate_turn(llm, structured_llm, prompt: str) -> DebateTurn:
+    """Obtain a validated turn using native structure or JSON output."""
+    if structured_llm is not None:
+        return DebateTurn.model_validate(structured_llm.invoke(prompt))
+
+    json_prompt = (
+        prompt
+        + "\n\nReturn only a JSON object matching this schema. "
+        "Do not include Markdown fences.\n"
+        + json.dumps(DebateTurn.model_json_schema(), ensure_ascii=False)
+    )
+    response = llm.invoke(json_prompt)
+    return DebateTurn.model_validate_json(response.content)
