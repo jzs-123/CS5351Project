@@ -113,7 +113,34 @@ class DeepSeekChatOpenAI(NormalizedChatOpenAI):
             reasoning = message.additional_kwargs.get("reasoning_content")
             if reasoning is not None:
                 message_dict["reasoning_content"] = reasoning
+        # DeepSeek's Chat Completions API documents ``max_tokens`` for the output
+        # cap (api-docs.deepseek.com/api/create-chat-completion). Current LangChain
+        # renames ``max_tokens`` to ``max_completion_tokens`` in the payload, which
+        # DeepSeek does not document, so the configured limit would be ignored. Map
+        # it back to ``max_tokens`` for this subclass only, honoring a per-invocation
+        # override and never inventing a key when no limit was configured.
+        self._restore_max_tokens(payload, kwargs)
         return payload
+
+    @staticmethod
+    def _restore_max_tokens(payload: dict, kwargs: dict) -> None:
+        """Emit DeepSeek's documented ``max_tokens`` instead of LangChain's rename.
+
+        Precedence: an explicit per-invocation ``max_tokens`` wins over a per-call
+        ``max_completion_tokens``, which wins over the configured value already in
+        the payload. No token key is added when none was set.
+        """
+        if "max_tokens" in kwargs and kwargs["max_tokens"] is not None:
+            payload["max_tokens"] = kwargs["max_tokens"]
+            payload.pop("max_completion_tokens", None)
+            return
+        if "max_completion_tokens" in kwargs and kwargs["max_completion_tokens"] is not None:
+            payload.pop("max_completion_tokens", None)
+            payload["max_tokens"] = kwargs["max_completion_tokens"]
+            return
+        if "max_completion_tokens" in payload:
+            value = payload.pop("max_completion_tokens")
+            payload.setdefault("max_tokens", value)
 
     def _create_chat_result(self, response, generation_info=None):
         chat_result = super()._create_chat_result(response, generation_info)
