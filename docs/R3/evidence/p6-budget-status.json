@@ -1,0 +1,31 @@
+{
+  "mode": "budget",
+  "started_at_utc": "2026-11-17T06:24:11.173052+00:00",
+  "model": "CS5351/DeepSeek-V4-Flash",
+  "endpoint_host": "llm.cs.cityu.edu.hk",
+  "actual_account": false,
+  "order_execution": false,
+  "status": "ok",
+  "error_type": "BudgetExceeded",
+  "error": "Run budget of $0.0000 reached (spent $0.0000); refusing further requests.",
+  "model_usage": {
+    "calls": 0,
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "total_usd": 0.0,
+    "missing_usage_calls": 0,
+    "usage_complete": true,
+    "budget_usd": 0.0,
+    "stopped": true,
+    "stop_reason": "BUDGET_STOPPED",
+    "unknown_models": [],
+    "by_model": {}
+  },
+  "operational_limit_reason": null,
+  "expected_budget_stop": true,
+  "completed_model_calls": 0,
+  "r3_completion_hook_reached": false,
+  "cost_json_persisted": true,
+  "finished_at_utc": "2026-11-17T06:24:14.667010+00:00",
+  "elapsed_seconds": 3.48
+}

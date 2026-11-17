@@ -1,0 +1,20 @@
+{
+  "mode": "review",
+  "started_at_utc": "2026-11-17T06:29:50.284248+00:00",
+  "model": "CS5351/DeepSeek-V4-Flash",
+  "endpoint_host": "llm.cs.cityu.edu.hk",
+  "actual_account": false,
+  "order_execution": false,
+  "status": "ok",
+  "original_analysis": "normal-02",
+  "model_analysis_reused": true,
+  "new_model_calls": 0,
+  "actual_data_outage": false,
+  "controlled_fault_injection": true,
+  "fault_attempted": true,
+  "original_rating_preserved": true,
+  "original_decision_preserved": true,
+  "position_status": "needs_data",
+  "finished_at_utc": "2026-11-17T06:29:50.474635+00:00",
+  "elapsed_seconds": 0.19
+}

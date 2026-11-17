@@ -1,0 +1,170 @@
+version: 1
+scope: R3 contribution only; feature priority Should in RE.md, enabled safety contracts
+  Must. Retrospective consolidation on 2026-11-17; not a claim these files predated
+  coding.
+requirements:
+- id: R3-F01
+  title: Five-tier deterministic sizing
+  type: functional
+  priority: Must
+  statement: Recognized ratings map through the adopted policy with explicit current
+    weight; unknown is not zero.
+  source:
+  - RE.md requirement3
+  - docs/R3/governance/approved-policy-and-tests.md
+  acceptance:
+  - criterion: Buy(.05,.01)=.20; Overweight(.05,.01)=.10; Hold(.08,.01)=.08; Underweight(.15,.01)=.10;
+      Sell(None,None)=0.
+    evidence:
+    - tests/test_position.py::test_buy_low_vol_keeps_full_target_with_stop_loss
+    - tests/test_position.py::test_relative_ratings_low_vol
+    - tests/test_position.py::test_sell_yields_zero_without_current_weight_or_volatility
+- id: R3-I01
+  title: Risk cap and monotonicity
+  type: safety
+  priority: Must
+  statement: AI ratings cannot bypass deterministic long-only caps or increase Underweight
+    exposure.
+  source:
+  - RE.md requirement3
+  - docs/R3/governance/approved-policy-and-tests.md
+  acceptance:
+  - criterion: Every ok target is in[0,1] and at most the effective cap; increasing
+      volatility never increases the target; Underweight target never exceeds current
+      weight.
+    evidence:
+    - tests/test_position.py::test_weight_never_increases_as_volatility_rises
+    - tests/test_position.py::test_underweight_never_adds_exposure
+    - tests/test_position.py::test_hold_over_the_cap_is_reduced_with_explicit_cap_override
+- id: R3-I02
+  title: No invented executable values
+  type: safety
+  priority: Must
+  statement: REVIEW, unknown holdings and unavailable required data yield explicit
+    non-executable states.
+  source:
+  - RE.md requirement3
+  - docs/R3/governance/approved-policy-and-tests.md
+  acceptance:
+  - criterion: needs_review/needs_context/needs_data have weight=null and stop_loss_pct=null;
+      zero target has no stop; confidence remains null with source not_provided.
+    evidence:
+    - tests/test_position.py::test_failure_signals_have_null_executable_fields_and_serialize
+    - tests/test_position.py::test_every_actual_zero_target_has_no_stop_loss
+    - tests/test_position.py::test_confidence_is_always_none_and_not_provided_on_every_status
+- id: R3-F02
+  title: Historical volatility provenance
+  type: functional
+  priority: Must
+  statement: Use 21 actual completed historical adjusted closes, 20 simple returns,
+    sample stdev(ddof=1), daily not annualized.
+  source:
+  - RE.md requirement3
+  - docs/R3/governance/approved-policy-and-tests.md
+  acceptance:
+  - criterion: Fixed analytic sample matches stdev; reject future/duplicate/unordered/bad/insufficient/stale
+      observations; snapshots recompute and explicitly say replay.
+    evidence:
+    - tests/test_position_inputs.py::test_alternating_returns_give_analytic_stdev
+    - tests/test_position_inputs.py::test_future_row_rejected
+    - tests/test_position_inputs.py::test_stale_boundary_10_allowed_11_rejected
+    - tests/test_position_inputs.py::test_snapshot_round_trip_recomputes_and_flags_replay
+- id: R3-I03
+  title: Preflight and run identity
+  type: safety
+  priority: Must
+  statement: Reject invalid explicit numbers/JSON/policy and mismatched ticker/date
+    before expensive model work; freeze one run and refresh subsequent file input.
+  source:
+  - RE.md requirement3
+  - docs/R3/governance/approved-policy-and-tests.md
+  acceptance:
+  - criterion: No model invocation on explicit bool/NaN/Inf/out-of-range/bad JSON/mismatch;
+      file edits change next signature; in-place config edits cannot alter prepared
+      inputs.
+    evidence:
+    - tests/test_position_inputs.py::test_load_context_rejects_bad_documents
+    - tests/test_position_integration.py::test_bad_r3_config_fails_before_client_creation
+    - tests/test_position_integration.py::test_prepare_run_frozen_despite_in_place_dict_mutation
+    - tests/test_position_integration.py::test_bool_mutated_path_context_rejected_not_reloaded
+- id: R3-Q01
+  title: API and CLI compatibility
+  type: quality
+  priority: Must
+  statement: Preserve propagate arguments and the(state,rating_string) contract; both
+    execution paths attach one additional position_signal at completion.
+  source:
+  - RE.md requirement3
+  - docs/R3/governance/approved-policy-and-tests.md
+  acceptance:
+  - criterion: Normal/debug/CLI produce the same signal for identical inputs; one
+      completion hook; original rating/decision unchanged; R4/R5 existing tests pass.
+    evidence:
+    - tests/test_position_integration.py::test_api_and_cli_produce_identical_signal_for_same_input
+    - tests/test_position_integration.py::test_hook_runs_exactly_once_api
+    - tests/test_position_integration.py::test_hook_runs_exactly_once_cli
+- id: R3-Q02
+  title: Consistent and inert reports
+  type: quality
+  priority: Must
+  statement: JSON, Markdown, HTML and terminal present the same recorded result, with
+    safe status-aware display and owned-file reconciliation.
+  source:
+  - RE.md requirement3
+  - docs/R3/governance/approved-policy-and-tests.md
+  acceptance:
+  - criterion: Success-to-off removes only guidance.md; success-to-failure hides stale
+      executable fields; preserve user notes; hostile fields add no active HTML or
+      links.
+    evidence:
+    - tests/test_position_reporting.py::test_success_then_off_removes_owned_guidance_only
+    - tests/test_position_reporting.py::test_success_then_needs_data_overwrites_without_stale_positive
+    - tests/test_position_reporting.py::test_saved_html_hostile_r3_fields_add_no_active_content
+- id: R3-C01
+  title: No additional LLM for position mapping
+  type: cost
+  priority: Must
+  statement: R3 sizing/data/display use deterministic code; retain R5 budget propagation
+    and finally cost records.
+  source:
+  - RE.md requirement3
+  - docs/R3/governance/approved-policy-and-tests.md
+  acceptance:
+  - criterion: Real normal-02 completed-call count is11 before and11 after R3; zero-budget
+      real configuration completes0 model calls and writes BUDGET_STOPPED cost JSON.
+    evidence:
+    - tests/test_position_integration.py::test_api_budget_stop_persists_cost_and_runs_no_hook
+    - docs/R3/evidence/p6-normal-status.json
+    - docs/R3/evidence/p6-budget-status.json
+- id: R3-G01
+  title: Truthful generation and verification evidence
+  type: governance
+  priority: Must
+  statement: Preserve actual OpenCode sessions and distinguish user approval, Codex
+    review and OpenCode implementation.
+  source:
+  - RE.md requirement3
+  - docs/R3/governance/approved-policy-and-tests.md
+  acceptance:
+  - criterion: Manifest hashes identify a complete raw session; annotation distinguishes
+      roles; full default suite passes1774 tests with6 skips/2 deselections recorded,
+      not hidden.
+    evidence:
+    - docs/R3/governance/approval-and-interventions.md
+    - docs/R3/evidence/p6-regression-status.json
+- id: R3-Q03
+  title: DeepSeek output-cap compatibility
+  type: quality
+  priority: Should
+  statement: The DeepSeek subclass emits the documented native output-cap key while
+    other providers retain their existing payload behavior.
+  source:
+  - RE.md requirement3
+  - docs/R3/governance/approved-policy-and-tests.md
+  acceptance:
+  - criterion: Configured/per-call limits serialize as max_tokens for DeepSeek; actual64-token
+      service check reports64 output tokens and finish_reason=length.
+    evidence:
+    - tests/test_deepseek_token_limit.py::test_configured_limit_is_sent_as_max_tokens
+    - tests/test_deepseek_token_limit.py::test_normalized_openai_keeps_modern_key
+    - docs/R3/evidence/p6-limit-status.json
