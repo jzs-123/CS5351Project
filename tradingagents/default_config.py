@@ -158,6 +158,16 @@ def build_default_config() -> dict:
         # unbounded reasoning/output and hangs or trips a gateway idle timeout
         # (e.g. some deepseek-v4-flash deployments, #1204).
         "max_tokens": None,
+        # R3: rating-to-position mapping. Off by default. An explicit
+        # ``position_context`` (a JSON path or an inline mapping) enables it even
+        # while the flag is False; otherwise ``position_enabled=True`` runs the
+        # enabled path without a context, which reports a needs_context status for
+        # a non-Sell rating. ``position_policy`` overrides only the approved
+        # defaults in ``tradingagents.position.PositionPolicy`` ({} = defaults).
+        # See tradingagents/position_processing.py.
+        "position_enabled": False,
+        "position_context": None,
+        "position_policy": {},
         # Checkpoint/resume: when True, LangGraph saves state after each node
         # so a crashed run can resume from the last successful step.
         "checkpoint_enabled": False,

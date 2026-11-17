@@ -18,6 +18,11 @@ from tradingagents.llm_clients import create_tier_client, tier_provider
 from tradingagents.llm_clients.usage_tracker import BudgetExceeded, UsageTracker
 from tradingagents.memory import TradingMemoryLog, settlement
 from tradingagents.memory.reflection import Reflector
+from tradingagents.position_processing import (
+    complete_position_signal,
+    prepare_run,
+    with_resolved_config,
+)
 from tradingagents.reporting import write_report_tree
 
 from .checkpointer import checkpoint_step, clear_checkpoint, get_checkpointer, thread_id
@@ -68,8 +73,18 @@ class TradingAgentsGraph:
             callbacks: Optional list of callback handlers (e.g., for tracking LLM/tool stats)
         """
         self.debug = debug
-        self.config = config or DEFAULT_CONFIG
+        # R3 preflight: validate the position config and copy it into a detached
+        # dict (the caller's dict and DEFAULT_CONFIG are never mutated) BEFORE
+        # set_config, directory creation or model-client construction, so a bad
+        # policy/context fails cheaply. Non-R3 behavior is unchanged.
+        base_config = config or DEFAULT_CONFIG
+        self.config = with_resolved_config(base_config, DEFAULT_CONFIG)
         self.callbacks = callbacks or []
+
+        # R3: the frozen per-run inputs (context/policy) and the (ticker, date) they
+        # belong to. Reset so no cached context leaks across runs on a reused graph.
+        self._r3_prepared = None
+        self._r3_run_key = None
 
         set_config(self.config)
 
@@ -146,6 +161,33 @@ class TradingAgentsGraph:
         """
         return str(trade_date) if is_historical(trade_date) else None
 
+    def _prepare_r3_run(self, ticker: str, trade_date: str, *, force: bool = False):
+        """Validate and freeze this run's R3 inputs once, before any model work.
+
+        With ``force`` (each new ``propagate``) the source context is reread even for
+        the same ticker/date, so a changed file at the same path updates the
+        checkpoint signature on a reused graph. Without ``force`` (``create_run_state``
+        inside the same run) an already-prepared snapshot is reused, so a file cannot
+        be re-read twice in one run. A different ticker/date always rereads, so no
+        cached context leaks across runs. Returns the frozen ``PreparedRun``.
+        """
+        ticker_key = str(ticker)
+        date_key = str(trade_date)
+        # ``getattr`` defaults keep bare graph doubles (``object.__new__``) working:
+        # they have no R3 attributes and simply prepare fresh each time.
+        if not force and getattr(self, "_r3_run_key", None) == (ticker_key, date_key):
+            return getattr(self, "_r3_prepared", None)
+        new_config, prepared = prepare_run(self.config, ticker_key, date_key)
+        self.config = new_config
+        self._r3_prepared = prepared
+        self._r3_run_key = (ticker_key, date_key)
+        return prepared
+
+    def _clear_r3_run(self) -> None:
+        """Drop this run's frozen R3 inputs so none leaks into a later run."""
+        self._r3_prepared = None
+        self._r3_run_key = None
+
     def _run_signature(self, asset_type: str, portfolio=None) -> str:
         """Run inputs that must invalidate a checkpoint if changed.
 
@@ -190,6 +232,11 @@ class TradingAgentsGraph:
         PortfolioRating enum.
         """
         trade_date = _validate_trade_date(trade_date)
+
+        # R3: validate and freeze this run's inputs before the checkpoint signature
+        # (which hashes self.config) or any model work happens. force=True rereads a
+        # path context each run so a changed file updates the signature.
+        self._prepare_r3_run(company_name, trade_date, force=True)
 
         with run_config(self.config), \
                 self.checkpoint_scope(company_name, trade_date, asset_type, portfolio) as thread_id_value:
@@ -244,6 +291,10 @@ class TradingAgentsGraph:
             self._checkpointer_ctx = None
             self.graph = self.workflow.compile()
         self._resuming = False
+        # R3: a finished/aborted run drops its frozen inputs so none leaks into a
+        # later run (a new run prepares fresh). ``getattr`` keeps bare doubles fine.
+        if hasattr(self, "_r3_prepared") or hasattr(self, "_r3_run_key"):
+            self._clear_r3_run()
 
     @contextmanager
     def checkpoint_scope(self, company_name, trade_date, asset_type: str = "stock", portfolio=None):
@@ -307,6 +358,10 @@ class TradingAgentsGraph:
         and loads them alongside the analysts (see ``_memory_step``).
         """
         trade_date = _validate_trade_date(trade_date)
+        # R3: prepare/freeze this run's inputs before instrument identity/model work.
+        # On the API path propagate() already prepared the same ticker/date, so this
+        # reuses that snapshot; on the CLI path this is the first preparation.
+        self._prepare_r3_run(company_name, trade_date)
         return self.propagator.create_initial_state(
             company_name,
             trade_date,
@@ -370,6 +425,15 @@ class TradingAgentsGraph:
     def record_decision(self, company_name, trade_date, final_state):
         """Record a finished run: its state log, and its decision in the memory log
         for reflection on the next same-ticker run. propagate() and the CLI both end here."""
+        # R3: attach (or clear) final_state['position_signal'] before logging, using
+        # this run's frozen inputs (never rereading a context file). The hook reads
+        # the existing rating and never changes the decision or rating. ``getattr``
+        # keeps bare graph doubles (``object.__new__`` in old tests) working: they
+        # have no R3 state and the hook falls back to the (disabled) config.
+        prepared = None
+        if getattr(self, "_r3_run_key", None) == (str(company_name), str(trade_date)):
+            prepared = getattr(self, "_r3_prepared", None)
+        complete_position_signal(self.config, company_name, trade_date, final_state, prepared)
         self._log_state(trade_date, final_state)
         decision = final_state.get("final_trade_decision")
         if not decision:
@@ -517,6 +581,10 @@ class TradingAgentsGraph:
             "debate_context_stats": final_state.get("debate_context_stats"),
             "run_settings": self.run_settings(),
         }
+        # R3: persist the position signal only when this run produced one, keeping
+        # the state log's explicit allowlist otherwise unchanged.
+        if final_state.get("position_signal") is not None:
+            entry["position_signal"] = final_state["position_signal"]
 
         # A ticker that would escape the results directory is rejected.
         safe_ticker = safe_ticker_component(final_state["company_of_interest"])

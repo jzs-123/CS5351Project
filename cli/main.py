@@ -53,6 +53,12 @@ def analyze(
         help="JSON file with current holdings and cash, so the trader, risk and "
         "portfolio agents size against your actual position.",
     ),
+    position_context: str = typer.Option(
+        None,
+        "--position-context",
+        help="JSON file with the current weight in this instrument for the R3 "
+        "rating-to-position mapping (ticker, as_of, current_weight, weight_source).",
+    ),
     ticker: str = typer.Option(None, "--ticker", help="Ticker to analyze, e.g. NVDA or 0700.HK; skips the prompt"),
     date: str = typer.Option(None, "--date", help="Analysis date, YYYY-MM-DD; skips the prompt"),
     analysts: str = typer.Option(
@@ -90,7 +96,12 @@ def analyze(
 
     try:
         flags = {"ticker": ticker, "date": date, "analysts": analysts, "save": save, "show": show, "html": html}
-        run_analysis(checkpoint=checkpoint, portfolio=portfolio_context, flags=flags)
+        run_kwargs = {"checkpoint": checkpoint, "portfolio": portfolio_context, "flags": flags}
+        # Only pass the new kwarg when given, so the bare-CLI call shape is unchanged.
+        # run_analysis parses it once (for the ticker/date match) before any graph work.
+        if position_context:
+            run_kwargs["position_context"] = position_context
+        run_analysis(**run_kwargs)
     except _NO_CONSOLE_ERRORS:
         # A terminal with no console buffer cannot host the interactive prompts.
         # Emit one actionable line on stderr instead of a prompt_toolkit
