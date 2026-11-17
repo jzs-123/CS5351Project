@@ -10,6 +10,13 @@ from datetime import datetime
 from pathlib import Path
 
 from tradingagents.agents.rating import run_rating
+from tradingagents.position_reporting import (
+    SECTION_AGENT,
+    SECTION_FILENAME,
+    SECTION_FOLDER,
+    SECTION_HEADING,
+    render_position_markdown,
+)
 
 
 def analyst_names(keys) -> list[str]:
@@ -107,6 +114,12 @@ def _report_parts(final_state: dict) -> list[tuple[str, str, list[tuple[str, str
                 written.append((agent, filename, value))
         if written:
             parts.append((heading, folder, written))
+    # R3: append the position-and-risk guidance after the portfolio section only when
+    # this run produced a (mapping) position_signal. Old states/checkpoints and
+    # disabled runs have none, so their report is unchanged.
+    guidance = render_position_markdown(final_state.get("position_signal"))
+    if guidance:
+        parts.append((SECTION_HEADING, SECTION_FOLDER, [(SECTION_AGENT, SECTION_FILENAME, guidance)]))
     return parts
 
 
@@ -154,4 +167,9 @@ def write_report_tree(final_state: dict, ticker: str, save_path, settings: dict 
         for _agent, filename, _path in agents:
             if (folder, filename) not in current_files:
                 (save_path / folder / filename).unlink(missing_ok=True)
+    # R3: the guidance file is owned by this writer too; remove it when this run has
+    # no position signal (success -> off / old result), never touching other files in
+    # 6_position/ that the user may have added.
+    if (SECTION_FOLDER, SECTION_FILENAME) not in current_files:
+        (save_path / SECTION_FOLDER / SECTION_FILENAME).unlink(missing_ok=True)
     return save_path / "complete_report.md"
