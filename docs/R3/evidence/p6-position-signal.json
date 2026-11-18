@@ -1,0 +1,137 @@
+{
+  "rating": "Overweight",
+  "status": "ok",
+  "weight": 0.2,
+  "stop_loss_pct": 0.08,
+  "confidence": null,
+  "confidence_source": "not_provided",
+  "current_weight": 0.15,
+  "raw_target_weight": 0.2,
+  "effective_cap": 0.2,
+  "daily_volatility": 0.01860240347509025,
+  "reason": "Overweight target 0.2 bounded by the volatility-scaled cap 0.2 (base cap 0.2, threshold 0.02).",
+  "policy_version": "r3-v1",
+  "cap_override": false,
+  "input_as_of": "2024-05-10",
+  "input_digest": "c489f88b7459abfce76f3399b2267c62fb46251ff7a32c68a5fd699a67475f18",
+  "data_source": "Yahoo/yfinance/load_ohlcv (possibly cached)",
+  "last_price_date": "2024-05-10",
+  "sample_size": 21,
+  "context": {
+    "as_of": "2024-05-10",
+    "current_weight": 0.15,
+    "ticker": "AAPL",
+    "weight_source": "course_smoke_fixture_not_actual_account"
+  },
+  "policy": {
+    "buy_target_weight": 0.2,
+    "max_position_weight": 0.2,
+    "policy_version": "r3-v1",
+    "step": 0.05,
+    "stop_loss_pct": 0.08,
+    "volatility_scaling": true,
+    "volatility_threshold": 0.02
+  },
+  "market": {
+    "ticker": "AAPL",
+    "as_of": "2024-05-10",
+    "last_observed_date": "2024-05-10",
+    "sample_size": 21,
+    "return_count": 20,
+    "window_ddof": 1,
+    "return_type": "simple",
+    "frequency": "1d",
+    "adjustment": "auto_adjust",
+    "daily_volatility": 0.01860240347509025,
+    "last_21_closes": [
+      [
+        "2024-04-12",
+        174.5134735107422
+      ],
+      [
+        "2024-04-15",
+        170.69798278808594
+      ],
+      [
+        "2024-04-16",
+        167.4261932373047
+      ],
+      [
+        "2024-04-17",
+        166.06210327148438
+      ],
+      [
+        "2024-04-18",
+        165.1131591796875
+      ],
+      [
+        "2024-04-19",
+        163.09669494628906
+      ],
+      [
+        "2024-04-22",
+        163.92701721191406
+      ],
+      [
+        "2024-04-23",
+        164.9747772216797
+      ],
+      [
+        "2024-04-24",
+        167.0703582763672
+      ],
+      [
+        "2024-04-25",
+        167.93028259277344
+      ],
+      [
+        "2024-04-26",
+        167.34710693359375
+      ],
+      [
+        "2024-04-29",
+        171.4986572265625
+      ],
+      [
+        "2024-04-30",
+        168.365234375
+      ],
+      [
+        "2024-05-01",
+        167.34710693359375
+      ],
+      [
+        "2024-05-02",
+        171.0340576171875
+      ],
+      [
+        "2024-05-03",
+        181.26467895507812
+      ],
+      [
+        "2024-05-06",
+        179.6139678955078
+      ],
+      [
+        "2024-05-07",
+        180.2959747314453
+      ],
+      [
+        "2024-05-08",
+        180.632080078125
+      ],
+      [
+        "2024-05-09",
+        182.44097900390625
+      ],
+      [
+        "2024-05-10",
+        181.1839141845703
+      ]
+    ],
+    "data_source": "Yahoo/yfinance/load_ohlcv (possibly cached)",
+    "acquisition": "load_ohlcv",
+    "retrieval_utc": "2026-11-17T06:25:57+00:00",
+    "content_digest": "a23584aa2301859068ecbbfc301c44f5b1a39bb7a741a3a425d4636be0bee51f"
+  }
+}

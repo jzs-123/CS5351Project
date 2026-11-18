@@ -1,0 +1,52 @@
+{
+  "mode": "run",
+  "started_at_utc": "2026-11-17T06:24:13.000364+00:00",
+  "model": "CS5351/DeepSeek-V4-Flash",
+  "endpoint_host": "llm.cs.cityu.edu.hk",
+  "actual_account": false,
+  "order_execution": false,
+  "status": "ok",
+  "rating": "Overweight",
+  "position_status": "ok",
+  "weight": 0.2,
+  "model_usage": {
+    "calls": 11,
+    "tokens_in": 48554,
+    "tokens_out": 14128,
+    "total_usd": 0.0,
+    "missing_usage_calls": 0,
+    "usage_complete": true,
+    "budget_usd": 0.1,
+    "stopped": false,
+    "stop_reason": null,
+    "unknown_models": [
+      [
+        "deepseek",
+        "CS5351/DeepSeek-V4-Flash"
+      ]
+    ],
+    "by_model": {
+      "deepseek/CS5351/DeepSeek-V4-Flash": {
+        "calls": 11,
+        "tokens_in": 48554,
+        "tokens_out": 14128,
+        "usd": 0.0,
+        "known": false
+      }
+    }
+  },
+  "model_requests_started": 11,
+  "r3_model_calls": 0,
+  "market_loads": 1,
+  "independent_daily_volatility": 0.01860240347509025,
+  "input_digest": "c489f88b7459abfce76f3399b2267c62fb46251ff7a32c68a5fd699a67475f18",
+  "report": "reports\\complete_report.md",
+  "checks": {
+    "llm_calls_before_r3": 11,
+    "llm_calls_after_r3": 11
+  },
+  "max_reported_output_tokens": 2467,
+  "reported_outputs_within_configured_limit": true,
+  "finished_at_utc": "2026-11-17T06:25:57.706317+00:00",
+  "elapsed_seconds": 104.73
+}

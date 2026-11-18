@@ -97,8 +97,21 @@ def _build_run_config(selections: dict, checkpoint: bool | None) -> dict:
     return config
 
 
-def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
+def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None, position_context=None):
     flags = flags or {}
+    # R3: parse the supplied position-context JSON first, before any prompt, model or
+    # auth setup, so a malformed file fails cheaply and clearly. Formatted here so a
+    # direct run_analysis call also exits 1 without a traceback.
+    context_obj = None
+    if position_context is not None:
+        try:
+            from tradingagents.position_inputs import load_position_context
+
+            context_obj = load_position_context(position_context)
+        except ValueError as exc:
+            console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(code=1) from None
+
     # With no terminal nothing can answer a prompt: name every question still
     # open before any model is called, rather than stopping at the first one.
     if not (sys.stdin and sys.stdin.isatty()):
@@ -112,6 +125,21 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
     selections = get_user_selections(flags)
 
     config = _build_run_config(selections, checkpoint)
+
+    # R3: a supplied --position-context enables the mapping. Run the same shared
+    # preflight used by the graph over ALL config (flag/policy/context) and require a
+    # ticker/date match, BEFORE the graph (and its model clients) is constructed. The
+    # file was already parsed once above; pass the parsed mapping only (no source
+    # path), so it is not reread again in this invocation.
+    if context_obj is not None:
+        config["position_context"] = context_obj.to_dict()
+    try:
+        from tradingagents.position_processing import prepare_run
+
+        prepare_run(config, selections["ticker"], selections["analysis_date"])
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from None
 
     stats_handler = StatsCallbackHandler()
 

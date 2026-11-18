@@ -1,0 +1,31 @@
+{
+  "exit_code": 0,
+  "source_stable": true,
+  "p5_sources_unchanged": true,
+  "sha256": {
+    "tradingagents/position.py": "5b311c413d0f23889c0ac9869fa4071dcfa89afbf722d5a7352d1f84047b75ea",
+    "tradingagents/position_inputs.py": "f19f3d2daa26b1c22451d81c330c63e8c806840a59d1cb1d85392eccad4b536d",
+    "tests/test_position.py": "655ce830c48083ea613ef91637e0ecb97aa5b309e421a6e0d8a61a72f5a2284e",
+    "tests/test_position_inputs.py": "603c9c22aebfc9e9e131501d52c64c0899ab98321f10c44321c17ccd84e9b85d",
+    "tradingagents/position_processing.py": "605a3429aaa9c52d39bc8bbecd27638e7e5adfba7c7cc7d82953ca931e035660",
+    "tradingagents/default_config.py": "2b5bd712b26e12d6bf19052b281791a7dee33225b205fcfc30bb0d6d5cd17264",
+    "tradingagents/graph/trading_graph.py": "72b7c98d1122ac1d99d73fbdd46f093fb0f3cf1a3b19b5837b8d0ea8b448b37e",
+    "cli/main.py": "2e59985fc74b04d9ba5891da1de90ba7c8bca68c540887b4086a72f4ec7ab85d",
+    "cli/run.py": "6934eea63ee7bb1c5fc4166d374ec52b71681e070e0bd2b42d8f223cd25639b1",
+    "tests/test_position_integration.py": "3905d893cc61f822029faf4365e3df4b0302727dd8fe2d7f7b089f773a08a914",
+    "tradingagents/position_reporting.py": "ee97d50d1dd0b51705fcd37d5470af789fb97bc2b215bc9c1d4fa9b66a7083c7",
+    "tradingagents/reporting.py": "1db0c92f3edc4d481006f159689e8d1231ab495663a888574653ab7c9268a4d1",
+    "tradingagents/report_html.py": "c955a4245ea48e2bf711cc280dc4a56e728a5209f78f128e78e147b6700336e8",
+    "cli/display.py": "dd5ec13f1af7095cf6212935d9ecfd0819b8b3be6df656b3ee8ca627a98fea9f",
+    "tests/test_position_reporting.py": "816e87dc2e7ee1d394ee8aad41a991971c5c37ede98aa65458b821aae4c9049d",
+    "tradingagents/llm_clients/openai_client.py": "4977b941ab4e06859272e4ab4b16dbdb4d7ecd98a067e9021e33ad737f1d7beb",
+    "tests/test_deepseek_token_limit.py": "d9b1d2d309eb7debf7a205a9c9ab58947a1d519f77e72a7235fcedf36c30caf4"
+  },
+  "elapsed_seconds": 60.61,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q"
+  ]
+}

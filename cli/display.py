@@ -19,6 +19,7 @@ from tradingagents.graph.analyst_execution import (
     ANALYST_NODE_SPECS,
     AnalystExecutionPlan,
 )
+from tradingagents.position_reporting import SECTION_HEADING, render_position_markdown
 
 console = Console()
 
@@ -435,6 +436,14 @@ def display_complete_report(final_state):
     if final_state.get("final_trade_decision"):
         console.print(Panel("[bold]V. Portfolio Manager Decision[/bold]", border_style="green"))
         console.print(Panel(Markdown(final_state["final_trade_decision"]), title="Portfolio Manager", border_style="blue", padding=(1, 2)))
+
+    # VI. Position and Risk Guidance (R3) — same shared Markdown as the saved report.
+    guidance = render_position_markdown(final_state.get("position_signal"))
+    if guidance:
+        console.print(Panel(f"[bold]{SECTION_HEADING}[/bold]", border_style="green"))
+        # The guidance is Markdown; a literal title (not interpolated as Rich markup)
+        # keeps any user text inert.
+        console.print(Panel(Markdown(guidance), title="Position Guidance", border_style="blue", padding=(1, 2)))
 
 
 def update_research_team_status(status):

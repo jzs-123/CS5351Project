@@ -1,0 +1,7 @@
+# R3 actual permission model
+
+The real OpenCode build session had explicit edit allowlists by stage: core+test, inputs+test, integration files+test, reporting files+test, then DeepSeek subclass+one new test. Shell, external web tools and external-directory actions were denied. Sensitive filenames(.env/auth.json/.env_secrets) were denied. Codex, acting as the supervising AI, ran tests and operational scripts separately.
+
+Historical wrapper read permission was broad with sensitive-name denies, alongside instructions restricting reads/sends to public project material and approved rules. This is not a claim of machine-enforced default-deny reads over the entire computer. The future launcher was tightened on2026-11-17 to deny reads by default and allow public project/rule/prompt paths, with Git/venv/credential-name denies. It has not been exercised by a subsequent model coding session and does not retroactively change historical permissions. The user separately authorized preparation reads over the course folder; that did not authorize transmitting unrelated assignments.
+
+Only the existing course service received authorized public development/runtime material. Runtime credentials were passed through an in-memory child-process pipe for ordinary authentication; no credential file/key is included. Native model runtime consumed public historical data and a fake holding. No broker/order permission exists. Publishing source/technical docs is separate from private student identity and full course transcripts.

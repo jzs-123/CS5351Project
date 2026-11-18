@@ -1,0 +1,34 @@
+version: 1
+scope: R3
+session:
+  session_id: ses_e1a88030affeTF5v4YbjJalaxd
+  raw_sha256: 9e0d262112f95c3fa4663342768a6ca086805e2fb44cc2317f2a3c403821f879
+  raw_bytes: 4288936
+  messages: 378
+  raw_location: local course bundle/transcripts/full-opencode-session.json
+  student_public_identity: bcj6
+  human_approval_source: governance/approved-policy-and-tests.md
+  codex_review_is_ai: true
+  peer_approval: pending
+roles:
+  human: policy/test adoption, staged continuation, final review still required
+  codex: AI preparation/review/verification/operational scripts/docs
+  opencode: product implementation and tests
+stages:
+- P2
+- P2fix
+- P3
+- P3fix
+- P3qa
+- P4
+- P4fix
+- P4qa
+- P4final
+- P4guard
+- P5
+- P5fix
+- P5qa
+- P5tests
+- P6fix
+actual_validation: 1774 passed,6 skipped,2 deselected; real smoke and explicit fault
+  injection; browser visual check not completed

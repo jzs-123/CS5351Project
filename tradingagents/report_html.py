@@ -151,6 +151,11 @@ main code { font: 0.88em/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, mono
 main pre { background: var(--wash); padding: 0.9rem 1rem; border-radius: 4px; overflow-x: auto; }
 main pre code { background: none; padding: 0; }
 main hr { width: 3rem; margin: 2rem auto; border: 0; border-top: 1px solid var(--rule); }
+/* R3 only: wrap long digests, Unicode and long single words so this one section
+   cannot force horizontal page overflow on a narrow viewport. Scoped to its class;
+   every other section's markup and CSS is unchanged. */
+.position-guidance, .position-guidance code, .position-guidance td {
+  overflow-wrap: anywhere; word-break: break-word; }
 
 .table { overflow-x: auto; margin: 0 0 1.25rem; }
 table { border-collapse: collapse; width: 100%; font: 0.86rem/1.45 var(--sans);
@@ -262,7 +267,7 @@ def render_report(ticker: str, final_state: dict, settings: dict | None, parts) 
     )
 
     contents, body = [], []
-    for n, (heading, _folder, written) in enumerate(parts, 1):
+    for n, (heading, folder, written) in enumerate(parts, 1):
         agents = "".join(
             f'<li><a href="#s{n}-{m}"><span class="bar"></span> <span class="label">{escape(agent)}</span></a></li>'
             for m, (agent, _f, _t) in enumerate(written, 1)
@@ -270,7 +275,10 @@ def render_report(ticker: str, final_state: dict, settings: dict | None, parts) 
         numeral, _, name = heading.partition(". ")
         contents.append(f'<li><a href="#s{n}"><span class="num">{escape(numeral)}</span> '
                         f'<span class="label">{escape(name)}</span></a><ul>{agents}</ul></li>')
-        body.append(f'<section id="s{n}"><h2>{escape(heading)}</h2>')
+        # R3's own section wraps long machine digests/Unicode/long words; every other
+        # section keeps its existing markup and CSS untouched.
+        section_class = ' class="position-guidance"' if folder == "6_position" else ""
+        body.append(f'<section id="s{n}"{section_class}><h2>{escape(heading)}</h2>')
         for m, (agent, _filename, text) in enumerate(written, 1):
             body.append(f'<h3 id="s{n}-{m}">{escape(agent)}</h3>\n{_render_agent_text(md, text)}')
         body.append("</section>")
